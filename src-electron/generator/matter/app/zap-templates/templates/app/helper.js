@@ -38,6 +38,7 @@ const TestHelper = require('../../common/ClusterTestGeneration.js');
 const kGlobalAttributes = [
   0xfff8, // GeneratedCommandList
   0xfff9, // AcceptedCommandList
+  0xfffa, // EventList
   0xfffb, // AttributeList
   0xfffc, // ClusterRevision
   0xfffd, // FeatureMap
@@ -187,6 +188,28 @@ function chip_endpoint_generated_commands_list(options) {
   return templateUtil.collectBlocks(ret, options, this);
 }
 
+function chip_endpoint_generated_event_count(options) {
+  return this.eventList.length
+}
+
+function chip_endpoint_generated_event_list(options) {
+  let comment = null
+
+  let index = 0
+  let ret = '{ \\\n'
+  this.eventList.forEach((ev) => {
+    if (ev.comment != comment) {
+      ret += `  /* ${ev.comment} */ \\\n`
+      ret += `  /* EventList (index=${index}) */ \\\n`
+      comment = ev.comment
+    }
+    ret += `  ${ev.eventId}, /* ${ev.name} */ \\\n`
+    index++
+  })
+  ret += '}\n'
+  return ret
+}
+
 /**
  * Return endpoint config GENERATED_CLUSTER MACRO
  * To be used as a replacement of endpoint_cluster_list since this one
@@ -268,6 +291,8 @@ function chip_endpoint_cluster_list() {
       .functions = ${functionArray}, \\
       .acceptedCommandList = ${acceptedCommandsListVal} ,\\
       .generatedCommandList = ${generatedCommandsListVal} ,\\
+      .eventList = ZAP_GENERATED_EVENTS_INDEX(${c.eventIndex}), \\
+      .eventCount = ${c.eventCount}, \\
     },\\\n`);
 
     totalCommands = totalCommands + acceptedCommands + generatedCommands;
@@ -920,6 +945,8 @@ exports.chip_endpoint_cluster_list = chip_endpoint_cluster_list;
 exports.chip_endpoint_data_version_count = chip_endpoint_data_version_count;
 exports.chip_endpoint_generated_commands_list =
   chip_endpoint_generated_commands_list;
+exports.chip_endpoint_generated_event_count = chip_endpoint_generated_event_count;
+exports.chip_endpoint_generated_event_list = chip_endpoint_generated_event_list;
 exports.asTypedExpression = asTypedExpression;
 exports.asTypedLiteral = asTypedLiteral;
 exports.asLowerCamelCase = asLowerCamelCase;
