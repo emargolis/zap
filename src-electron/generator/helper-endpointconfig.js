@@ -565,6 +565,7 @@ async function collectAttributes(endpointTypes, options) {
         attributeSize: 0,
         mask: [],
         commands: [],
+        events: [],
         functions: 'NULL',
         comment: `Endpoint: ${ept.endpointId}, Cluster: ${c.name} (${c.side})`,
       }
@@ -850,6 +851,17 @@ async function collectAttributes(endpointTypes, options) {
           commandMfgCodes.push(mfgCmd)
         }
       })
+
+      // Go over the events
+      c.events.sort(zclUtil.eventComparator)
+      c.events.forEach((ev) => {
+        let event = {
+          eventId: asMEI(ev.manufacturerCode, ev.code),
+          name: cmd.name,
+        }
+        cluster.events.push(event)
+      })
+
       endpointAttributeSize += clusterAttributeSize
       cluster.attributeSize = clusterAttributeSize
       clusterList.push(cluster)
@@ -1011,11 +1023,12 @@ function endpoint_config(options) {
             ept.clusters = clusters // Put 'clusters' into endpoint
             let ps = []
             clusters.forEach((cl) => {
-              // No client-side attributes or commands (at least for
+              // No client-side attributes, commands, and events (at least for
               // endpoint_config purposes) in Matter.
               if (cl.side == dbEnum.side.client) {
                 cl.attributes = []
                 cl.commands = []
+                cl.events = []
                 return
               }
               ps.push(
@@ -1040,6 +1053,13 @@ function endpoint_config(options) {
                   .selectEndpointClusterCommands(db, cl.clusterId, ept.id)
                   .then((commands) => {
                     cl.commands = commands
+                  })
+              )
+              ps.push(
+                queryEndpoint
+                  .selectEndpointClusterEvents(db, cl.clusterId, ept.id)
+                  .then((events) => {
+                    cl.events = events
                   })
               )
             })
