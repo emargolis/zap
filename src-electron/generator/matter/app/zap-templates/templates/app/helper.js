@@ -189,34 +189,30 @@ function chip_endpoint_generated_commands_list(options) {
 }
 
 function chip_endpoint_generated_event_count(options) {
-  let count = 0;
+  let count = 0
   this.clusterList.forEach((c) => {
     count += c.events.length
-  });
-  return count;
+  })
+  return count
 }
 
 function chip_endpoint_generated_event_list(options) {
-  let ret = [];
-  let index = 0;
+  let comment = null
+  let index = 0
+  let ret = '{ \\\n'
   this.clusterList.forEach((c) => {
-    let events = [];
-
     c.events.forEach((ev) => {
-      events.push(`${ev.eventId} /* ${ev.name} */`);
-    });
-
-    if (events.length > 0) {
-      ret.push({ text: `  /* ${c.comment} */\\` });
-      ret.push({
-        text: `  /*   EventList (index=${index}) */ \\\n  ${events.join(
-          ', \\\n  '
-        )}, \\`,
-      });
-      index += events.length;
-    }
-  });
-  return templateUtil.collectBlocks(ret, options, this);
+      if (c.comment != comment) {
+        ret += `  /* ${c.comment} */ \\\n`
+        ret += `  /* EventList (index=${index}) */ \\\n`
+        comment = c.comment
+      }
+      ret += `  ${ev.eventId}, /* ${ev.name} */ \\\n`
+      index++
+    })
+  })
+  ret += '}\n'
+  return ret
 }
 
 /**
