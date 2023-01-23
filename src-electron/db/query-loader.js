@@ -905,6 +905,30 @@ async function insertDeviceTypeCommands(db, dtClusterRefDataPairs) {
   )
 }
 
+/**
+ * This handles the loading of device type event requirements into the database.
+ * There is a need to post-process to attach the actual event ref after the fact
+ * @param {*} db
+ * @param {*} dtClusterRefDataPairs
+ */
+async function insertDeviceTypeEvents(db, dtClusterRefDataPairs) {
+  let events = []
+  dtClusterRefDataPairs.map((dtClusterRefDataPair) => {
+    let dtClusterRef = dtClusterRefDataPair.dtClusterRef
+    let clusterData = dtClusterRefDataPair.clusterData
+    if ('requiredEvents' in clusterData) {
+      clusterData.requiredEvents.forEach((eventName) => {
+        events.push([dtClusterRef, eventName])
+      })
+    }
+  })
+  return dbApi.dbMultiInsert(
+    db,
+    'INSERT INTO DEVICE_TYPE_EVENT (DEVICE_TYPE_CLUSTER_REF, EVENT_NAME) VALUES (?, ?)',
+    events
+  )
+}
+
 async function insertAccessOperations(db, packageId, operations) {
   let data = operations.map((o) => [packageId, o.name, o.description])
   return dbApi.dbMultiInsert(
