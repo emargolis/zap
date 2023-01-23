@@ -261,6 +261,13 @@ export function setDeviceTypeReference(context, endpointIdDeviceTypeRefPair) {
     .then((res) => {
       setRequiredCommands(context, res.data)
     })
+  Vue.prototype
+    .$serverGet(
+      `${restApi.uri.deviceTypeEvents}${endpointIdDeviceTypeRefPair.deviceTypeRef}`
+    )
+    .then((res) => {
+      setRequiredEvents(context, res.data)
+    })
 
   Vue.prototype
     .$serverGet(
@@ -448,6 +455,13 @@ export function updateSelectedEndpointType(
       .then((res) => {
         setRequiredCommands(context, res.data)
       })
+    Vue.prototype
+      .$serverGet(
+        `${restApi.uri.deviceTypeEvents}${endpointTypeDeviceTypeRefPair.deviceTypeRef}`
+      )
+      .then((res) => {
+        setRequiredEvents(context, res.data)
+      })
     context.commit(
       'updateSelectedEndpointType',
       endpointTypeDeviceTypeRefPair.endpointType
@@ -592,6 +606,16 @@ export function setRequiredCommands(context, data) {
   })
   context.commit(`setRequiredCommandsList`, {
     requiredCommands: requiredCommands,
+  })
+}
+
+export function setRequiredEvents(context, data) {
+  let requiredEvents = []
+  data.forEach((record) => {
+    if (record.eventRef) requiredEvents.push(record.eventRef)
+  })
+  context.commit(`setRequiredEventsList`, {
+    requiredEvents: requiredEvents,
   })
 }
 
@@ -799,7 +823,7 @@ export function generateAllEndpointsData(context, endpointData) {
           enabledClients.push(record.clusterRef)
         } else {
           enabledServers.push(record.clusterRef)
-          
+ 
           }
         }
       })
