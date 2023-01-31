@@ -192,27 +192,63 @@ function chip_endpoint_generated_event_count(options) {
   let packageIds = templateUtil.ensureZclPackageIds(this)
   let count = 0
   this.clusterList.forEach((c) => {
-    let events = queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds)
-    count += events.length
-  })
+    queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds).then((events) => {
+      events.forEach((event) => {
+        count++
+      });
+    });
+  });
+  return count
+}
+
+function chip_endpoint_generated_event_count2(options) {
+  let packageIds = templateUtil.ensureZclPackageIds(this)
+  let count = 0
+  this.clusterList.forEach((c) => {
+    queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds).then((events) => {
+      count += events.length
+    });
+  });
+  return count
+}
+
+function chip_endpoint_generated_event_count3(options) {
+  let packageIds = templateUtil.ensureZclPackageIds(this)
+  let count = 0
+  this.clusterList.forEach((c) => {
+    queryEvents.selectEventsByClusterId(this.global.db, c.code, packageIds).then((events) => {
+      events.forEach((event) => {
+        count++
+      });
+    });
+  });
+  return count
+}
+
+function chip_endpoint_generated_event_count4(options) {
+  let packageIds = templateUtil.ensureZclPackageIds(this)
+  let count = 0
+  this.clusterList.forEach((c) => {
+    queryEvents.selectEventsByClusterId(this.global.db, c.code, packageIds).then((events) => {
+      count += events.length
+    });
+  });
   return count
 }
 
 function chip_endpoint_generated_event_list(options) {
   let packageIds = templateUtil.ensureZclPackageIds(this)
-  let comment = null
   let index = 0
   let ret = '{ \\\n'
   this.clusterList.forEach((c) => {
     let events = queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds)
 
-    events.forEach((ev) => {
-      if (c.comment != comment) {
-        ret += `  /* ${c.comment} */ \\\n`
-        ret += `  /* EventList (index=${index}) */ \\\n`
-        comment = c.comment
-      }
+    if (events.length > 0) {
+      ret += `  /* ${c.comment} */ \\\n`
+      ret += `  /* EventList (index=${index}) */ \\\n`
+    }
 
+    events.forEach((ev) => {
       let eventId = asMEI(ev.manufacturerCode, ev.code)
       ret += `  ${eventId}, /* ${ev.name} */ \\\n`
       index++
@@ -969,6 +1005,12 @@ exports.chip_endpoint_generated_commands_list =
   chip_endpoint_generated_commands_list;
 exports.chip_endpoint_generated_event_count =
   chip_endpoint_generated_event_count;
+exports.chip_endpoint_generated_event_count2 =
+  chip_endpoint_generated_event_count2;
+exports.chip_endpoint_generated_event_count3 =
+  chip_endpoint_generated_event_count3;
+exports.chip_endpoint_generated_event_count4 =
+  chip_endpoint_generated_event_count4;
 exports.chip_endpoint_generated_event_list =
   chip_endpoint_generated_event_list;
 exports.asTypedExpression = asTypedExpression;
