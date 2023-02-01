@@ -316,8 +316,9 @@ async function chip_endpoint_generated_event_count12() {
   const { db, sessionId } = this.global;
   const packageIds = await templateUtil.ensureZclPackageIds(this);
 
-  queryEvents.selectAllEvents(db, packageIds).then((events) => return events.length)
-
+  queryEvents.selectAllEvents(db, packageIds).then((events) => {
+    return events.length
+  });
   return -1
 }
 
