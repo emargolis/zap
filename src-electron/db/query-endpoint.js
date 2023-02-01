@@ -281,7 +281,6 @@ SELECT
   E.EVENT_ID,
   E.NAME,
   E.CODE,
-  E.CLUSTER_REF,
   E.MANUFACTURER_CODE,
   E.IS_OPTIONAL
 FROM
@@ -291,9 +290,9 @@ LEFT JOIN
 ON
   E.EVENT_ID = ETE.EVENT_REF
 WHERE
-  E.CLUSTER_REF = ?
+  (E.CLUSTER_REF = ? OR E.CLUSTER_REF IS NULL)
   AND ETE.ENDPOINT_TYPE_REF = ?
-ORDER BY E.CODE
+ORDER BY E.MANUFACTURER_CODE, E.CODE
   `,
     [clusterId, endpointTypeId]
   )
@@ -303,10 +302,10 @@ ORDER BY E.CODE
       id: row['EVENT_ID'],
       name: row['NAME'],
       code: row['CODE'],
-      clusterId: row['CLUSTER_REF'],
+      clusterId: clusterId,
       manufacturerCode: row['MANUFACTURER_CODE'],
       isOptional: dbApi.fromDbBool(row['IS_OPTIONAL']),
-      hexCode: '0x' + bin.int8ToHex(row['CODE']),
+      hexCode: '0x' + bin.int16ToHex(row['CODE']),
     }
   })
 }
