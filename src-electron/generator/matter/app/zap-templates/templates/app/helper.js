@@ -188,157 +188,23 @@ function chip_endpoint_generated_commands_list(options) {
   return templateUtil.collectBlocks(ret, options, this);
 }
 
-function chip_endpoint_generated_event_count() {
-  let packageIds = templateUtil.ensureZclPackageIds(this)
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds).then((events) => {
-      events.forEach((event) => {
-        count++
-      });
-    });
-  });
-  return count
-}
-
-function chip_endpoint_generated_event_count2() {
-  let packageIds = templateUtil.ensureZclPackageIds(this)
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds).then((events) => {
-      count += events.length
-    });
-  });
-  return count
-}
-
-function chip_endpoint_generated_event_count3() {
-  let packageIds = templateUtil.ensureZclPackageIds(this)
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(this.global.db, c.code, packageIds).then((events) => {
-      events.forEach((event) => {
-        count++
-      });
-    });
-  });
-  return count
-}
-
-function chip_endpoint_generated_event_count4() {
-  let packageIds = templateUtil.ensureZclPackageIds(this)
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(this.global.db, c.code, packageIds).then((events) => {
-      count += events.length
-    });
-  });
-  return count
-}
-
-function chip_endpoint_generated_event_count5() {
-  return this.clusterList.length
-}
-
-function chip_endpoint_generated_event_count6() {
-  let count = 0
-  this.clusterList.forEach((c) => {
-    count++
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count7() {
-  let count = 0
-  this.clusterList.forEach((c) => {
-    count++
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count8() {
-  const { db, sessionId } = this.global;
-  const packageIds = await templateUtil.ensureZclPackageIds(this);
-
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(db, c.clusterId, packageIds).then((events) => {
-      events.forEach((event) => {
-        count++
-      });
-    });
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count9() {
-  const { db, sessionId } = this.global;
-  const packageIds = await templateUtil.ensureZclPackageIds(this);
-
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(db, c.clusterId, packageIds).then((events) => {
-      count += events.length
-    });
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count10() {
-  const { db, sessionId } = this.global;
-  const packageIds = await templateUtil.ensureZclPackageIds(this);
-
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(db, c.code, packageIds).then((events) => {
-      events.forEach((event) => {
-        count++
-      });
-    });
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count11() {
-  const { db, sessionId } = this.global;
-  const packageIds = await templateUtil.ensureZclPackageIds(this);
-
-  let count = 0
-  this.clusterList.forEach((c) => {
-    queryEvents.selectEventsByClusterId(db, c.code, packageIds).then((events) => {
-      count += events.length
-    });
-  });
-  return count
-}
-
-async function chip_endpoint_generated_event_count12() {
-  const { db, sessionId } = this.global;
-  const packageIds = await templateUtil.ensureZclPackageIds(this);
-
-  queryEvents.selectAllEvents(db, packageIds).then((events) => {
-    return events.length
-  });
-  return -1
+function chip_endpoint_generated_event_count(options) {
+  return this.eventList.length
 }
 
 function chip_endpoint_generated_event_list(options) {
-  let packageIds = templateUtil.ensureZclPackageIds(this)
+  let comment = null
+
   let index = 0
   let ret = '{ \\\n'
-  this.clusterList.forEach((c) => {
-    let events = queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds)
-
-    if (events.length > 0) {
-      ret += `  /* ${c.comment} */ \\\n`
+  this.eventList.forEach((ev) => {
+    if (ev.comment != comment) {
+      ret += `  /* ${ev.comment} */ \\\n`
       ret += `  /* EventList (index=${index}) */ \\\n`
+      comment = ev.comment
     }
-
-    events.forEach((ev) => {
-      let eventId = asMEI(ev.manufacturerCode, ev.code)
-      ret += `  ${eventId}, /* ${ev.name} */ \\\n`
-      index++
-    })
+    ret += `  ${ev.eventId}, /* ${ev.name} */ \\\n`
+    index++
   })
   ret += '}\n'
   return ret
@@ -352,7 +218,6 @@ function chip_endpoint_generated_event_list(options) {
 function chip_endpoint_cluster_list() {
   let ret = '{ \\\n';
   let totalCommands = 0;
-  let totalEvents = 0;
   this.clusterList.forEach((c) => {
     let mask = '';
     let functionArray = c.functions;
@@ -416,15 +281,6 @@ function chip_endpoint_cluster_list() {
       } )`;
     }
 
-    let packageIds = templateUtil.ensureZclPackageIds(this)
-    let events = queryEvents.selectEventsByClusterId(this.global.db, c.clusterId, packageIds)
-    let generatedEventListVal = 'nullptr';
-    let generatedEventCount = events.length;
-    if (generatedEventCount > 0) {
-      totalEvents += generatedEventCount;
-      generatedEventListVal = `ZAP_GENERATED_EVENTS_INDEX( ${totalEvents} )`;
-    }
-
     ret = ret.concat(`  { \\
       /* ${c.comment} */ \\
       .clusterId = ${c.clusterId},  \\
@@ -435,8 +291,8 @@ function chip_endpoint_cluster_list() {
       .functions = ${functionArray}, \\
       .acceptedCommandList = ${acceptedCommandsListVal} ,\\
       .generatedCommandList = ${generatedCommandsListVal} ,\\
-      .eventList = ${generatedEventListVal}, \\
-      .eventCount = ${generatedEventCount}, \\
+      .eventList = ZAP_GENERATED_EVENTS_INDEX(${c.eventIndex}), \\
+      .eventCount = ${c.eventCount}, \\
     },\\\n`);
 
     totalCommands = totalCommands + acceptedCommands + generatedCommands;
@@ -1090,17 +946,6 @@ exports.chip_endpoint_data_version_count = chip_endpoint_data_version_count;
 exports.chip_endpoint_generated_commands_list =
   chip_endpoint_generated_commands_list;
 exports.chip_endpoint_generated_event_count = chip_endpoint_generated_event_count;
-exports.chip_endpoint_generated_event_count2 = chip_endpoint_generated_event_count2;
-exports.chip_endpoint_generated_event_count3 = chip_endpoint_generated_event_count3;
-exports.chip_endpoint_generated_event_count4 = chip_endpoint_generated_event_count4;
-exports.chip_endpoint_generated_event_count5 = chip_endpoint_generated_event_count5;
-exports.chip_endpoint_generated_event_count6 = chip_endpoint_generated_event_count6;
-exports.chip_endpoint_generated_event_count7 = chip_endpoint_generated_event_count7;
-exports.chip_endpoint_generated_event_count8 = chip_endpoint_generated_event_count8;
-exports.chip_endpoint_generated_event_count9 = chip_endpoint_generated_event_count9;
-exports.chip_endpoint_generated_event_count10 = chip_endpoint_generated_event_count10;
-exports.chip_endpoint_generated_event_count11 = chip_endpoint_generated_event_count11;
-exports.chip_endpoint_generated_event_count12 = chip_endpoint_generated_event_count12;
 exports.chip_endpoint_generated_event_list = chip_endpoint_generated_event_list;
 exports.asTypedExpression = asTypedExpression;
 exports.asTypedLiteral = asTypedLiteral;

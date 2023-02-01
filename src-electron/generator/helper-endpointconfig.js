@@ -513,10 +513,12 @@ async function collectAttributes(endpointTypes, options) {
   let commandMfgCodes = [] // Array of { index, mfgCode } objects
   let clusterMfgCodes = [] // Array of { index, mfgCode } objects
   let attributeMfgCodes = [] // Array of { index, mfgCode } objects
+  let eventMfgCodes = [] // Array of { index, mfgCode } objects
+  let eventList = []
   let attributeList = []
   let commandList = []
   let endpointList = [] // Array of { clusterIndex, clusterCount, attributeSize }
-  let clusterList = [] // Array of { clusterId, attributeIndex, attributeCount, attributeSize, mask, functions, comment }
+  let clusterList = [] // Array of { clusterId, attributeIndex, attributeCount, attributeSize, eventIndex, eventCount, mask, functions, comment }
   let longDefaults = [] // Array of strings representing bytes
   let longDefaultsIndex = 0
   let minMaxIndex = 0
@@ -531,6 +533,7 @@ async function collectAttributes(endpointTypes, options) {
   let reportList = [] // Array of { direction, endpoint, clusterId, attributeId, mask, mfgCode, minOrSource, maxOrEndpoint, reportableChangeOrTimeout }
   let longDefaultsList = [] // Array of { value, size. comment }
   let attributeIndex = 0
+  let eventIndex = 0
   let spaceForDefaultValue =
     options.spaceForDefaultValue !== undefined
       ? options.spaceForDefaultValue
@@ -563,9 +566,10 @@ async function collectAttributes(endpointTypes, options) {
         attributeIndex: attributeIndex,
         attributeCount: c.attributes.length,
         attributeSize: 0,
+        eventIndex: eventIndex,
+        eventCount: c.events.length,
         mask: [],
         commands: [],
-        events: [],
         functions: 'NULL',
         comment: `Endpoint: ${ept.endpointId}, Cluster: ${c.name} (${c.side})`,
       }
@@ -574,6 +578,7 @@ async function collectAttributes(endpointTypes, options) {
 
       clusterIndex++
       attributeIndex += c.attributes.length
+      eventIndex += c.events.length
 
       c.attributes.sort(zclUtil.attributeComparator)
 
@@ -854,12 +859,22 @@ async function collectAttributes(endpointTypes, options) {
 
       // Go over the events
       c.events.sort(zclUtil.eventComparator)
+
       c.events.forEach((ev) => {
         let event = {
           eventId: asMEI(ev.manufacturerCode, ev.code),
           name: ev.name,
+          comment: cluster.comment,
         }
-        cluster.events.push(event)
+        eventList.push(event)
+
+        if (ev.manufacturerCode) {
+          let mfgEv = {
+            index: eventList.length - 1,
+            mfgCode: ev.manufacturerCode,
+          }
+          eventMfgCodes.push(mfgEv)
+        }
       })
 
       endpointAttributeSize += clusterAttributeSize
@@ -883,7 +898,9 @@ async function collectAttributes(endpointTypes, options) {
     clusterList: clusterList,
     attributeList: attributeList,
     commandList: commandList,
+    eventList: eventList,
     longDefaults: longDefaults,
+    eventMfgCodes: eventMfgCodes,
     clusterMfgCodes: clusterMfgCodes,
     commandMfgCodes: commandMfgCodes,
     attributeMfgCodes: attributeMfgCodes,

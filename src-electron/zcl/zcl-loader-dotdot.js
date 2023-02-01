@@ -612,15 +612,11 @@ function prepareDeviceType(deviceType) {
       cluster.include.forEach((include) => {
         let attributes = []
         let commands = []
-        let events = []
         if ('requireAttribute' in include) {
           attributes = include.requireAttribute
         }
         if ('requireCommand' in include) {
           commands = include.requireCommand
-        }
-        if ('requireEvent' in include) {
-          events = include.requireEvent
         }
         ret.clusters.push({
           client: 'true' == include.$.client,
@@ -631,7 +627,6 @@ function prepareDeviceType(deviceType) {
             include.$.cluster != undefined ? include.$.cluster : include._,
           requiredAttributes: attributes,
           requiredCommands: commands,
-          requiredEvents: events,
         })
       })
     }
